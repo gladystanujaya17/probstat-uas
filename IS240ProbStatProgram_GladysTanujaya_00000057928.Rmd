@@ -1,0 +1,401 @@
+---
+title: "ProbStat Lab UAS"
+date: "Genap 2021/2022"
+output:
+  pdf_document: 
+    number_sections: yes
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+******************************************************
+Judul    : Lab UAS
+Nama     : Gladys Tanujaya    
+NIM      : 0000057928
+******************************************************
+
+# Memanggil semua package yang dibutuhkan dan membaca data
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+#Library
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(car)
+library(lmtest)
+library(ggplot2)
+
+#read file
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="biodata")
+View(kuisioner)
+
+#Mengubah tipe data menjadi factor
+kuisioner$`Asal Universitas` <- as.factor(kuisioner$`Asal Universitas`)
+kuisioner$angkatan <- as.factor(kuisioner$angkatan)
+
+#str, head, tail
+str(kuisioner)
+head(kuisioner)
+tail(kuisioner)
+
+#Tingkat Signifikansi: 5% untuk semua uji hipotesa
+```
+
+#Visualisasi Data
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+#1. Perbandingan Responden UMN dan Eksternal
+
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="biodata")
+View(kuisioner)
+
+#Tabulasi Frekuensi Asal Universitas
+(frekuensi <- table(kuisioner$`Asal Universitas`))
+
+#Diagram Batang
+legenda <- c("1. UMN", "2. Eksternal")
+warna = c("yellow", "red")
+barplot (frekuensi, main = "Frekuensi Responden", names.arg = legenda, 
+         xlab = "Mahasiswa", ylab = "Frekuensi", col = warna)
+
+#2. Perbandingan Responden Per Angkatan
+
+#Read File
+kuisioner <- read_excel("kuisionerfinal.xlsx", sheet="biodata")
+View(kuisioner)
+
+#Tabulasi Frekuensi Angkatan
+(frekuensi <- table(kuisioner$angkatan))
+
+#Diagram Batang
+legenda <- c("2018", "2019", "2020", "2021")
+warna = c("yellow", "red", "blue", "green")
+barplot (frekuensi, main = "Frekuensi Responden per Angkatan", names.arg = legenda, 
+         xlab = "Angkatan", ylab = "Frekuensi", col = warna)
+
+
+#3. Perbandingan Jenis E-Wallet yang digunakan
+
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="jenis")
+View(kuisioner)
+
+#Mengubah Tipe Data
+kuisioner$ewallet <- as.factor(kuisioner$ewallet)
+
+#Tabulasi Frekuensi Jenis E-Wallet
+(frekuensi <- table(kuisioner$ewallet))
+
+#Diagram Batang
+legenda <- c("DANA", "GoPay", "OVO", "ShopeePay")
+warna = c("yellowgreen", "purple", "cyan", "orange")
+barplot (frekuensi, main = "Jenis E-Wallet yang Digunakan", names.arg = legenda, 
+         xlab = "Jenis E-Wallet", ylab = "Frekuensi", col = warna)
+
+
+#4. Perbandingan Frekuensi Penggunaan E-Wallet antara Mahasiswa UMN dan Mahasiswa Eksternal
+
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="perbandingan")
+View(kuisioner)
+
+#Mengubah tipe data
+kuisioner$university <- as.factor(kuisioner$university)
+kuisioner$ewallet <- as.factor(kuisioner$ewallet)
+
+#Tabulasi Frekuensi
+(frekuensi <- table(kuisioner$university, kuisioner$ewallet))
+
+#Diagram Batang
+judul <- "Distribusi Frekuensi Penggunaan E-Wallet antara Mahasiswa UMN dan Eksternal"
+sbX <- "Jenis E-Wallet"
+sbY <- "Frekuensi"
+legenda <- c("1. a", "2. b", "3. c", "4. d", "5. e")
+color <- c("Blue", "Yellow")
+barplot(frekuensi, main = judul, xlab = sbX, ylab = sbY)
+
+
+
+```
+
+#Distribusi Normal
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="numerikc")
+View(kuisioner)
+
+options(scipen = 999)
+
+#1. 
+#Densitas pengeluaran selama seminggu
+plot(density(kuisioner$biayaseminggu),
+     main="Berapa banyak biaya yang dikeluarkan dengan e-wallet selama seminggu?")
+
+#Shapiro Test pengeluaran selama seminggu
+shapiro.test(kuisioner$biayaseminggu)
+
+#Q-Q Plot pengeluaran selama seminggu
+qqnorm(kuisioner$biayaseminggu)
+qqline(kuisioner$biayaseminggu, col = "red")
+
+#Summary 1
+summary(kuisioner$biayaseminggu)
+
+
+#2. 
+#Densitas Berapa Bulan Pemakaian E-Wallet
+plot(density(kuisioner$berapabulan),
+     main="Berapa Lama Menggunakan E-Wallet
+     (dalam bulan)")
+
+#Shapiro Test Berapa Bulan Pemakaian E-Wallet
+shapiro.test(kuisioner$berapabulan)
+
+#Q-Q Ploat Berapa Bulan Pemakaian E-Wallet
+qqnorm(kuisioner$berapabulan)
+qqline(kuisioner$berapabulan, col = "red")
+
+#Summary 2
+summary(kuisioner$berapabulan)
+
+
+#3. 
+#Densitas Penggunaan E-Wallet selama sebulan
+plot(density(kuisioner$penggunaan), 
+     main="Selama sebulan, sudah berapa kali Anda menggunakan e-wallet? ")
+
+#Shapiro Test Penggunaan E-Wallet selama sebulan
+shapiro.test(kuisioner$penggunaan)
+qqnorm(kuisioner$penggunaan)
+
+#Q-Q Plot
+qqline(kuisioner$penggunaan, col = "red")
+
+#Summary 3
+summary(kuisioner$penggunaan)
+
+
+#4. 
+#Densitas Cashback (tidak normal)
+plot(density(kuisioner$cashback), main="Cashback")
+
+#Shapiro Test Cashback
+shapiro.test(kuisioner$cashback)
+
+#Q-Q Plot Cashback
+qqnorm(kuisioner$cashback)
+qqline(kuisioner$cashback, col = "red")
+
+#Summary 4
+summary(kuisioner$cashback)
+
+
+#5.
+#Densitas Berapa Batas Saldo dalam E-Wallet
+plot(density(kuisioner$batassaldo), main="Batas Saldo")
+
+#Shapiro Test Berapa Batas Saldo dalam E-Wallet
+shapiro.test(kuisioner$batassaldo)
+
+#Q-Q Plot
+qqnorm(kuisioner$batassaldo)
+qqline(kuisioner$batassaldo, col = "red")
+
+#Summary 5
+summary(kuisioner$batassaldo)
+
+
+#Menampilkan boxplot data numerik
+boxplot(kuisioner$biayaseminggu, main="Boxplot Pengeluaran E-wallet Selama Seminggu")
+boxplot(kuisioner$cashback, main="Boxplot Total Cashback yang Diharapkan Mahasiswa")
+boxplot(kuisioner$berapabulan, main="Boxplot Lamanya Responden Menggunakan E-Wallet")
+boxplot(kuisioner$batassaldo, main="Boxplot Batas Saldo pada E-Wallet")
+boxplot(kuisioner$penggunaan, main="Boxplot Banyaknya Menggunakan E-Wallet Selama Sebulan")
+```
+
+#Uji Hipotesis ANOVA
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+#Hipotesis 1:
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="anova1")
+View(kuisioner)
+
+#Hipotesis 1
+#H0: Adasnya persamaan total pengeluaran e-wallet selama seminggu antara mahasiswa UMN dan mahasiswa eksternal
+#H1: Tidak adanya persamaan total pengeluaran e-wallet selama seminggu antara mahasiswa UMN dan mahasiswa eksternal
+
+
+#Normalitas
+apply(kuisioner, 2, shapiro.test)
+#p-value Eksternal = 0.4331
+#p-value Internal = 0.1284
+#Kesimpulan: kedua data numerik berdistribusi normal
+
+#Kesamaan Varians
+apply(kuisioner, 2, var, na.rm = TRUE)
+stackcost <- stack(kuisioner)
+View(stackcost)
+
+#Boxplot
+boxplot(values ~ ind, data = stackcost, horizontal = TRUE, main = "Boxplot Hipotesis Pertama")
+
+#Kesimpulan:
+#Varians datanya antara mahasiswa UMN dan mahasiswa Eksternal "sama"
+
+#Hasil ANOVA
+result <- aov(values ~ ind, data = stackcost)
+summary(result)
+#p-value: 0.274 > alpha (0,05)
+
+#Kesimpulan:
+#H0 diterima, adanya persamaan total pengeluaran e-wallet selama seminggu antara mahasiswa UMN dan mahasiswa eksternal
+
+#Hipotesis 2:
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="anova2c")
+View(kuisioner)
+
+#Hipotesis 2
+#H0: Adanya persamaan lama penggunaan e-wallet selama seminggu antara GoPay, ShopeePay, OVO, dan DANA
+#H1: Tidak adanya persamaan lama penggunaan e-wallet selama seminggu antara GoPay, ShopeePay, OVO, dan DANA
+
+#Normalitas
+apply(kuisioner, 2, shapiro.test)
+#p-value GoPay = 0.4269
+#p-value ShopeePay = 0.6061
+#p-value OVO = 0.4991
+#p-value DANA =  0.8934
+#Kesimpulan: keempat data numerik berdistribusi normal
+
+#Kesamaan Varians
+apply(kuisioner, 2, var, na.rm = TRUE)
+stackcost <- stack(kuisioner)
+View(stackcost)
+
+#Boxplot
+boxplot(values ~ ind, data = stackcost, horizontal = TRUE, main = "Boxplot Hipotesis Kedua")
+
+#Kesimpulan:
+#Varians tidak sama sehingga tidak dapat dilakukan uji ANOVA. Terdapat perbedaan varians antar data karena adanya perbedaan jumlah responden yang cukup jauh antar jenis pengguna e-wallet, seperti DANA dengan total 15 responden, sedangkan GoPay dengan total 38 responden. Hal itu menyebabkan persebaran data menjadi tidak seimbang.
+
+
+```
+
+#Uji Hipotesis Regresi Multilinear
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="regresi")
+View(kuisioner)
+
+#Hipotesis
+#H0: Lamanya menggunakan e-wallet mempengaruhi pengeluaran setiap minggunya dan seberapa sering menggunakan e-wallet selama sebulan
+#H1: Lamanya menggunakan e-wallet tidak mempengaruhi pengeluaran setiap minggunya dan seberapa sering menggunakan e-wallet selama sebulan
+
+#Scatter Plot 
+#Pola 1
+plot(kuisioner$berapabulan ~ kuisioner$biayaseminggu)
+abline(lm(kuisioner$berapabulan ~ kuisioner$biayaseminggu), col = "red")
+
+#Pola 2
+plot(kuisioner$berapabulan ~ kuisioner$penggunaan)
+abline(lm(kuisioner$berapabulan ~ kuisioner$penggunaan), col = "red")
+
+#Korelasi
+cor(kuisioner[,1:3], method="pearson")
+
+#Fit Model
+fit2 <- lm(kuisioner$berapabulan ~ kuisioner$biayaseminggu + kuisioner$penggunaan, data = kuisioner)
+
+#Cek Asumsi
+par(mfrow = c(2,2))
+plot(fit2)
+par(mfrow = c(1,1))
+#Kesimpulan:
+#Plot Pertama:
+#Gambar plot Residuals vs Fitted menunjukkan bahwa residual tersebar dengan acak. 
+#Plot Kedua:
+#Gambar plot Normal Q-Q menunjukkan bahwa data termasuk berdistribusi normal atau Gaussian karena residual mengikuti garis diagonal. Hal ini menunjukkan bahwa data memenuhi syarat distribusi normal karena adanya Normal Q-Q yang mengikuti diagonal.
+#Plot Ketiga:
+#Gambar plot Scale-Location menunjukkan bahwa garis merah masih termasuk horizontal dan residual tersebar secara acak. Hal tersebut juga menunjukkan bahwa data sudah memenuhi salah satu syarat regresi multi-linear, yaitu linearitas.
+#Plot Keempat:
+#Gambar plot Residuals vs Leverage menunjukkan bahwa tidak ada residual data yang keluar dari cook's distance. Artinya adalah tidak ada outliers pada residual. 
+
+
+#Uji syarat-syarat regresi multilinear
+
+#Uji Autokorelasi
+lmtest::dwtest(fit2)
+#p-value: 0,5031, artinya tidak ada korelasi karena p-value > alpha (0,05)
+
+#Uji Homoskedastisitas
+lmtest::bptest(fit2)
+#p-value: 0,2884, artinya data termasuk ke dalam homoskedastisitas karena p-value > alpha (0,05)
+
+#Uji Normalitas
+shapiro.test(fit2$residuals)
+#p-value: 0,4316, artinya data residual termasuk normal karena p-value > alpha (0,05)
+
+#Uji Multikolinearitas
+car::vif(fit2)
+#Tidak ada korelasi antara variabel independen dalam model karena hasil vif (1,000002) kurang dari 5 atau 10
+
+#Summary Model
+summary(fit2)
+
+#Kesimpulan:
+#H0 ditolak, lamanya menggunakan e-wallet tidak mempengaruhi pengeluaran setiap minggunya dan seberapa sering menggunakan e-wallet selama sebulan
+```
+
+#Uji Hipotesis Non-Parametrik
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+#Read File
+kuisioner <- read_excel("IS240ProbStatProgram_GladysTanujaya_00000057928.xlsx", sheet="mannwhitney")
+View(kuisioner)
+
+#Hipotesis
+#H0: Harapan cashback e-wallet mahasiswa UMN sama dengan harapan cashback e-wallet mahasiswa eksternal
+#H1: Harapan cashback e-wallet mahasiswa UMN tidak sama dengan harapan cashback e-wallet mahasiswa eksternal
+
+#Normalitas
+shapiro.test(kuisioner$cashback)
+#p-value: 9.11e-08/ 0.0000000911 < alpha (0.05), menunjukkan bahwa data tidak berdistribusi normal
+
+#Filter Data
+#Filter Data Mahasiswa UMN
+umn <- kuisioner %>% filter(`Asal Universitas` =="UMN")
+#Filter Data Mahasiswa Eksternal
+eksternal <- kuisioner %>% filter(`Asal Universitas`=="Eksternal")
+
+#Mann-Whitney Test
+wilcox.test(umn$cashback, eksternal$cashback, paired = FALSE, alternative = "greater", conf.level = 0.95)
+
+#p-value: 0.3337 > alpha (0.05)
+
+#Kesimpulan:
+#H0 diterima, harapan cashback e-wallet mahasiswa UMN sama dengan harapan cashback e-wallet mahasiswa eksternal
+```
+
+#Uji Hipotesis Chi-Square
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+
+#Hipotesis
+#H0: Penggunaan e-wallet sebagai alat pembayaran terbaik daripada tipe pembayaran lainnya sudah sesuai dengan ekspektasi penulis
+#H1: Penggunaan e-wallet sebagai alat pembayaran terbaik daripada tipe pembayaran lainnya tidak sesuai dengan ekspektasi penulis
+
+Response <- c("1","2","3","4","5")
+Frequency <- c(1,2,9,40,48)
+Expectation <- c(0.05,0.07,0.18,0.3,0.4)
+Expectation2 <- Expectation*100
+chisq.test(Frequency, p = Expectation)
+
+#Kesimpulan:
+#H0 ditolak, penggunaan e-wallet sebagai alat pembayaran terbaik daripada tipe pembayaran lainnya tidak sesuai dengan ekspektasi penulis
+```
